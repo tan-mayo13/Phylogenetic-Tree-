@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PhyloTree v2</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:       #e8e9f5;
+      --surface:  #dee6ed;
+      --card:     #ffffff;
+      --border:   #4b568b;
+      --ink:      #1a1510;
+      --ink2:     #4a4035;
+      --muted:    #9a9080;
+      --accent:   #1e51c8;
+      --accent2:  #2ad2e8;
+      --teal:     #1e687a;
+      --teal2:    #2a77aa;
+      --gold:     #b8860b;
+      --mono:     'DM Mono', monospace;
+      --serif:    'Instrument Serif', serif;
+      --sans:     'Outfit', sans-serif;
+      --r:        12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      min-height: 100vh;
+    }
+
+    /* ── Top bar ──────────────────────────────────────────────────────────── */
+    .topbar {
+      background: var(--ink);
+      color: #fff;
+      padding: 0 32px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar-logo {
+      font-family: var(--serif);
+      font-size: 1.35rem;
+      font-style: italic;
+      color: #fff;
+      letter-spacing: -0.01em;
+    }
+    .topbar-logo span { color: var(--accent2); }
+    .topbar-tag {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      background: var(--accent);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: .08em;
+    }
+    .topbar-right {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: #aaa;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────────────────── */
+    .main {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 0;
+      min-height: calc(100vh - 56px);
+    }
+
+    /* ── Sidebar ──────────────────────────────────────────────────────────── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      overflow-y: auto;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--muted);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    /* ── Algorithm toggle ─────────────────────────────────────────────────── */
+    .algo-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .algo-btn {
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      background: var(--card);
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--ink2);
+      transition: all .2s;
+      line-height: 1.3;
+    }
+    .algo-btn small {
+      display: block;
+      font-weight: 300;
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .algo-btn.active {
+      background: var(--ink);
+      color: #fff;
+    }
+    .algo-btn.active small { color: #aaa; }
+
+    /* ── Sequences ────────────────────────────────────────────────────────── */
+    #sequences-container { display: flex; flex-direction: column; gap: 8px; }
+
+    .seq-row {
+      display: grid;
+      grid-template-columns: 100px 1fr 28px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .seq-row input {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink);
+      outline: none;
+      width: 100%;
+      transition: border-color .15s;
+    }
+    .seq-row input::placeholder { color: var(--muted); }
+    .seq-row input:focus { border-color: var(--teal); }
+    .seq-row input.seq-input { text-transform: uppercase; letter-spacing: .04em; }
+
+    .btn-del {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      cursor: pointer;
+      width: 28px; height: 28px;
+      display: grid; place-items: center;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .btn-del:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Buttons ──────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all .15s;
+    }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--ink2);
+    }
+    .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
+
+    .btn-cta {
+      background: var(--accent);
+      color: #fff;
+      width: 100%;
+      justify-content: center;
+      padding: 12px;
+      font-size: 0.88rem;
+      border-radius: 10px;
+    }
+    .btn-cta:hover { background: #b04018; }
+    .btn-cta:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+
+    /* ── Presets ──────────────────────────────────────────────────────────── */
+    .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip {
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--ink2);
+      font-family: var(--mono);
+      font-size: 0.67rem;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .chip:hover { border-color: var(--teal); color: var(--teal); }
+
+    /* ── Status ───────────────────────────────────────────────────────────── */
+    .status {
+      display: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+    }
+    .status.err  { background: #fde8e0; border: 1px solid #f0b8a0; color: #c84b1e; display:block; }
+    .status.info { background: #e0f0ee; border: 1px solid #a0d8d0; color: #1e7a6e; display:block; }
+
+    /* ── Content pane ─────────────────────────────────────────────────────── */
+    .content {
+      padding: 28px 32px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--muted);
+      text-align: center;
+      padding: 60px 0;
+    }
+    .placeholder .big { font-family: var(--serif); font-size: 3rem; font-style: italic; opacity: .18; }
+    .placeholder p { font-family: var(--mono); font-size: 0.72rem; }
+
+    /* ── View tabs ────────────────────────────────────────────────────────── */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+    .view-tab {
+      padding: 10px 20px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: .06em;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all .15s;
+    }
+    .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Tree panels ──────────────────────────────────────────────────────── */
+    .tree-panel { display: none; }
+    .tree-panel.active { display: block; }
+
+    .canvas-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: auto;
+    }
+    canvas { display: block; }
+
+    /* ── ASCII panel ──────────────────────────────────────────────────────── */
+    .ascii-box {
+      background: var(--ink);
+      border-radius: var(--r);
+      padding: 24px 28px;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: #c8d8c0;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    /* ── Newick ───────────────────────────────────────────────────────────── */
+    .newick-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink2);
+      word-break: break-all;
+    }
+    .newick-wrap b { color: var(--teal); }
+
+    /* ── Matrix ───────────────────────────────────────────────────────────── */
+    .matrix-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+    }
+    th, td {
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    th { background: var(--surface); color: var(--teal); font-weight: 500; }
+    td { color: var(--ink2); }
+    td.diag { color: var(--muted); }
+    td.hi { background: #fde8e0; color: var(--accent); font-weight: 600; }
+
+    /* ── Info box ─────────────────────────────────────────────────────────── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .info-card h4 {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .info-card p {
+      font-size: 0.8rem;
+      color: var(--ink2);
+      line-height: 1.5;
+    }
+
+    /* ── Spinner ──────────────────────────────────────────────────────────── */
+    .spin {
+      width: 16px; height: 16px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .5s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 760px) {
+      .main { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-logo">Phylo<span>Tree</span></div>
+  <div class="topbar-tag">v2.0</div>
+  <div class="topbar-right">Java · Spring Boot · UPGMA · Neighbor-Joining</div>
+</div>
+
+<div class="main">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <!-- Algorithm chooser -->
+    <div>
+      <div class="section-label">Algorithm</div>
+      <div class="algo-toggle">
+        <button class="algo-btn active" id="btn-upgma" onclick="selectAlgo('upgma')">
+          UPGMA
+          <small>Assumes molecular clock</small>
+        </button>
+        <button class="algo-btn" id="btn-nj" onclick="selectAlgo('nj')">
+          Neighbor-Joining
+          <small>Rate-corrected · accurate</small>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sequences -->
+    <div>
+      <div class="section-label">Input Sequences</div>
+      <div id="sequences-container"></div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-ghost" onclick="addRow()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Sequence
+        </button>
+        <button class="btn btn-ghost" onclick="clearAll()">Clear</button>
+      </div>
+    </div>
+
+    <!-- Presets -->
+    <div>
+      <div class="section-label">Example Datasets</div>
+      <div class="presets">
+        <button class="chip" onclick="loadPreset('primates')">🦍 Primates</button>
+        <button class="chip" onclick="loadPreset('viruses')">🦠 Viruses</button>
+        <button class="chip" onclick="loadPreset('plants')">🌿 Plants</button>
+        <button class="chip" onclick="loadPreset('birds')">🐦 Birds</button>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="status" id="status"></div>
+
+    <!-- Build -->
+    <button class="btn btn-cta" id="build-btn" onclick="buildTree()">
+      <div class="spin" id="spin"></div>
+      <span id="btn-lbl">Build Phylogenetic Tree</span>
+    </button>
+
+  </aside>
+
+  <!-- ── Content ─────────────────────────────────────────────────────────── -->
+  <main class="content" id="content">
+    <div class="placeholder" id="placeholder">
+      <div class="big">Phylogeny</div>
+      <p>Enter sequences on the left and press Build to see the tree.</p>
+    </div>
+
+    <!-- Results (hidden until tree is built) -->
+    <div id="results" style="display:none; display:flex; flex-direction:column; gap:20px;">
+
+      <!-- View tabs -->
+      <div>
+        <div class="view-tabs">
+          <button class="view-tab active" onclick="showTab('dendrogram')">Dendrogram</button>
+          <button class="view-tab" onclick="showTab('radial')">Radial Tree</button>
+          <button class="view-tab" onclick="showTab('ascii')">ASCII Tree</button>
+          <button class="view-tab" onclick="showTab('matrix')">Distance Matrix</button>
+        </div>
+
+        <!-- Dendrogram -->
+        <div class="tree-panel active" id="panel-dendrogram" style="padding-top:16px;">
+          <div class="canvas-wrap">
+            <canvas id="canvas-dendro"></canvas>
+          </div>
+          <div class="newick-wrap" style="margin-top:12px;">
+            <b>NEWICK:</b> <span id="newick-out"></span>
+          </div>
+        </div>
+
+        <!-- Radial -->
+        <div class="tree-panel" id="panel-radial" style="padding-top:16px;">
+          <div class="canvas-wrap" style="display:flex;justify-content:center;">
+            <canvas id="canvas-radial"></canvas>
+          </div>
+        </div>
+
+        <!-- ASCII -->
+        <div class="tree-panel" id="panel-ascii" style="padding-top:16px;">
+          <div class="ascii-box" id="ascii-out"></div>
+        </div>
+
+        <!-- Matrix -->
+        <div class="tree-panel" id="panel-matrix" style="padding-top:16px;">
+          <div class="matrix-wrap">
+            <table id="matrix-table"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info cards -->
+      <div class="info-grid" id="info-cards"></div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const API = 'http://localhost:8080/api/tree';
+let selectedAlgo = 'upgma';
+let rowCount = 0;
+let lastTree = null;
+let lastSeqs = [];
+
+// ── Presets ───────────────────────────────────────────────────────────────────
+const PRESETS = {
+  primates: [
+    { name:'Human',     seq:'ATCGATCGATCGTTCGATCGATCGATCG' },
+    { name:'Chimp',     seq:'ATCGATCGGTCGTTCGATCGATCAATCG' },
+    { name:'Gorilla',   seq:'ATCGATCGATCGTTCGTTCGATCGATCG' },
+    { name:'Orangutan', seq:'ATCGAACGATCGTTCGATCGATCGATAG' },
+    { name:'Gibbon',    seq:'ATCGAACGAACGTTCGATCGATCGAAAG' },
+  ],
+  viruses: [
+    { name:'SARS-CoV-2', seq:'GGATGCAGTTGAAAGCGAAGATCTTGAG' },
+    { name:'SARS-CoV-1', seq:'GGATGCAGTTGAGAGCGAAGATCTTGAG' },
+    { name:'MERS-CoV',   seq:'GGATGCAGTCGAGAGTGAAGTTCTTGAG' },
+    { name:'Influenza',  seq:'GGCTGCAGTTGAAAGCGAAAGCCTTGAA' },
+    { name:'HCoV-229E',  seq:'GGATGCAGCAGAAAGCGCAGATCTTGCG' },
+  ],
+  plants: [
+    { name:'Arabidopsis', seq:'ATGGCTAGCATGGATCTGAGCTTCAAGC' },
+    { name:'Rice',        seq:'ATGGCTAGCATGAATCTGAGCTTCAAGC' },
+    { name:'Maize',       seq:'ATGGCTAGCATGAATCAGAGCTTCAAGC' },
+    { name:'Tomato',      seq:'ATGGCAAGCATGGATCTGAGCTTCAAGC' },
+    { name:'Potato',      seq:'ATGGCAAGCATGGATCTGAGCTTCAAAC' },
+  ],
+  birds: [
+    { name:'Chicken',  seq:'AAGTCGATCGATCGTTCGATCGAACGATC' },
+    { name:'Duck',     seq:'AAGTCGATCGAACGTTCGATCGAACGATC' },
+    { name:'Eagle',    seq:'AAGTCGATCGATCGTTCGATCGAACGATT' },
+    { name:'Penguin',  seq:'AAGTCGGTCGATCGTTCGATCGAACGATC' },
+    { name:'Sparrow',  seq:'AAGTCGATCGATCGTTCGATCGAATGATC' },
+  ],
+};
+
+// ── Algorithm selector ────────────────────────────────────────────────────────
+function selectAlgo(a) {
+  selectedAlgo = a;
+  document.getElementById('btn-upgma').classList.toggle('active', a === 'upgma');
+  document.getElementById('btn-nj').classList.toggle('active', a === 'nj');
+}
+
+// ── Sequence rows ─────────────────────────────────────────────────────────────
+function addRow(name = '', seq = '') {
+  rowCount++;
+  const id = rowCount;
+  const c  = document.getElementById('sequences-container');
+  const row = document.createElement('div');
+  row.className = 'seq-row';
+  row.id = `row-${id}`;
+  row.innerHTML = `
+    <input class="name-input" type="text" placeholder="Name" value="${name}"/>
+    <input class="seq-input"  type="text" placeholder="Sequence (ATCG…)" value="${seq}"
+           oninput="this.value=this.value.toUpperCase()"/>
+    <button class="btn-del" onclick="document.getElementById('row-${id}').remove()" title="Remove">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+  c.appendChild(row);
+}
+
+function clearAll() {
+  document.getElementById('sequences-container').innerHTML = '';
+  rowCount = 0;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('placeholder').style.display = 'flex';
+  setStatus('');
+}
+
+function loadPreset(key) {
+  clearAll();
+  PRESETS[key].forEach(p => addRow(p.name, p.seq));
+}
+
+// ── Build tree ────────────────────────────────────────────────────────────────
+async function buildTree() {
+  const rows = document.querySelectorAll('.seq-row');
+  const sequences = [];
+  rows.forEach(r => {
+    const name = r.querySelector('.name-input').value.trim();
+    const seq  = r.querySelector('.seq-input').value.trim();
+    if (name && seq) sequences.push({ name, sequence: seq });
+  });
+
+  if (sequences.length < 2) { setStatus('Need at least 2 sequences.', 'err'); return; }
+
+  setLoading(true);
+  setStatus('Computing distances and building tree…', 'info');
+
+  try {
+    const res  = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ algorithm: selectedAlgo, sequences }),
+    });
+    const data = await res.json();
+    if (!res.ok) { setStatus(data.error || 'Server error.', 'err'); return; }
+
+    lastTree = data;
+    lastSeqs = sequences;
+
+    setStatus('');
+    document.getElementById('placeholder').style.display = 'none';
+    const r = document.getElementById('results');
+    r.style.display = 'flex';
+
+    renderDendrogram(data, sequences);
+    renderRadial(data, sequences);
+    renderAscii(data);
+    renderMatrix(sequences);
+    renderInfoCards(sequences);
+
+    showTab('dendrogram');
+    r.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (e) {
+    setStatus('⚠️ Cannot connect to backend. Is the Java server running on port 8080?', 'err');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ── Tab switcher ──────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tree-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.querySelectorAll('.view-tab').forEach(t => {
+    if (t.textContent.toLowerCase().includes(name.substring(0,4))) t.classList.add('active');
+  });
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function getLeaves(node) {
+  if (!node.children || !node.children.length) return [node];
+  return node.children.flatMap(getLeaves);
+}
+
+function toNewick(node, isRoot) {
+  if (!node.children || !node.children.length)
+    return `${node.name}:${(node.branchLength||0).toFixed(4)}`;
+  const ch = node.children.map(c => toNewick(c, false)).join(',');
+  const bl = isRoot ? '' : `:${(node.branchLength||0).toFixed(4)}`;
+  return `(${ch})${bl}`;
+}
+
+function maxBranchDepth(node, depth) {
+  if (!node.children || !node.children.length) return depth + (node.branchLength||0);
+  return Math.max(...node.children.map(c => maxBranchDepth(c, depth + (node.branchLength||0))));
+}
+
+// ── 1. Dendrogram ─────────────────────────────────────────────────────────────
+function renderDendrogram(root, seqs) {
+  const leaves = getLeaves(root);
+  const PAD_L = 24, PAD_R = 160, PAD_T = 20, ROW = 42;
+  const W = 760, H = leaves.length * ROW + PAD_T * 2;
+  const canvas = document.getElementById('canvas-dendro');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  const totalD = maxBranchDepth(root, 0) || 1;
+  const drawW  = W - PAD_L - PAD_R;
+
+  // assign x by accumulated branch depth
+  function assignX(node, depth) {
+    node._x = PAD_L + (depth / totalD) * drawW;
+    if (node.children) node.children.forEach(c => assignX(c, depth + (c.branchLength||0)));
+  }
+  // assign y to leaves, average for internals
+  let li = 0;
+  function assignY(node) {
+    if (!node.children || !node.children.length) {
+      node._y = PAD_T + li * ROW + ROW / 2; li++; return;
+    }
+    node.children.forEach(assignY);
+    node._y = (node.children[0]._y + node.children[node.children.length-1]._y) / 2;
+  }
+  assignY(root); assignX(root, 0);
+
+  // grid lines
+  ctx.strokeStyle = '#ece8e0'; ctx.lineWidth = 1;
+  for (let step = 0; step <= 5; step++) {
+    const x = PAD_L + (step / 5) * drawW;
+    ctx.beginPath(); ctx.moveTo(x, PAD_T - 8); ctx.lineTo(x, H - PAD_T + 8); ctx.stroke();
+    ctx.fillStyle = '#bbb'; ctx.font = '10px DM Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText((step/5 * totalD).toFixed(3), x, PAD_T - 12);
+  }
+
+  // branches
+  function drawBranches(node) {
+    if (!node.children || !node.children.length) return;
+    // vertical bar
+    ctx.beginPath(); ctx.strokeStyle = '#c8c0b4'; ctx.lineWidth = 1.5;
+    ctx.moveTo(node._x, node.children[0]._y);
+    ctx.lineTo(node._x, node.children[node.children.length-1]._y);
+    ctx.stroke();
+    node.children.forEach(c => {
+      ctx.beginPath(); ctx.strokeStyle = '#8a7060'; ctx.lineWidth = 2;
+      ctx.moveTo(node._x, c._y); ctx.lineTo(c._x, c._y); ctx.stroke();
+      // branch length label
+      const mx = (node._x + c._x) / 2;
+      ctx.fillStyle = '#b0a090'; ctx.font = '9px DM Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText((c.branchLength||0).toFixed(3), mx, c._y - 5);
+      drawBranches(c);
+    });
+  }
+  drawBranches(root);
+
+  // leaf labels
+  const palette = ['#c84b1e','#1e7a6e','#b8860b','#4a3a8a','#1a5a8a','#8a1a5a'];
+  leaves.forEach((lf, i) => {
+    ctx.beginPath(); ctx.arc(lf._x, lf._y, 5, 0, Math.PI*2);
+    ctx.fillStyle = palette[i % palette.length]; ctx.fill();
+    ctx.fillStyle = '#1a1510'; ctx.font = '600 13px Outfit, sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(lf.name, lf._x + 12, lf._y);
+  });
+
+  // root dot
+  ctx.beginPath(); ctx.arc(root._x, root._y, 6, 0, Math.PI*2);
+  ctx.fillStyle = '#1a1510'; ctx.fill();
+
+  // Newick
+  document.getElementById('newick-out').textContent = toNewick(root, true) + ';';
+}
+
+// ── 2. Radial tree ────────────────────────────────────────────────────────────
+function renderRadial(root, seqs) {
+  const SIZE = 560;
+  const cx = SIZE/2, cy = SIZE/2, R = 220;
+  const canvas = document.getElementById('canvas-radial');
+  canvas.width = SIZE; canvas.height = SIZE;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, SIZE, SIZE);
+
+  const leaves = getLeaves(root);
+  const n = leaves.length;
+  const totalD = maxBranchDepth(root, 0) || 1;
+
+  // assign angle to each leaf
+  leaves.forEach((lf, i) => { lf._angle = (2 * Math.PI * i) / n - Math.PI/2; });
+
+  // assign angle (avg of children) to internals, radius by depth
+  function assignPolar(node, depth) {
+    node._r = (depth / totalD) * R;
+    if (!node.children || !node.children.length) return;
+    node.children.forEach(c => assignPolar(c, depth + (c.branchLength||0)));
+    node._angle = node.children.reduce((s,c)=>s+c._angle,0)/node.children.length;
+  }
+  assignPolar(root, 0);
+
+  function toXY(node) {
+    return [cx + node._r * Math.cos(node._angle), cy + node._r * Math.sin(node._angle)];
+  }
+
+  // draw edges
+  function drawEdges(node) {
+    if (!node.children) return;
+    const [px,py] = toXY(node);
+    node.children.forEach(c => {
+      const [cx2,cy2] = toXY(c);
+      // arc at parent radius
+      ctx.beginPath();
+      ctx.strokeStyle = '#c8b89a'; ctx.lineWidth = 1.5;
+      const arcR = node._r;
+      const a1 = Math.atan2(c._angle < node._angle ? node.children[0]._angle : node.children[node.children.length-1]._angle, arcR);
+      ctx.moveTo(px, py);
+      // straight line (simpler, clean look)
+      ctx.lineTo(cx + c._r * Math.cos(node._angle), cy + c._r * Math.sin(node._angle));
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.strokeStyle = '#8a6848'; ctx.lineWidth = 2;
+      ctx.moveTo(cx + c._r * Math.cos(node._angle), cy + c._r * Math.sin(node._angle));
+      ctx.lineTo(cx2, cy2);
+      ctx.stroke();
+      drawEdges(c);
+    });
+  }
+  drawEdges(root);
+
+  // radial rings
+  ctx.strokeStyle = '#ece6dc'; ctx.lineWidth = 1;
+  for (let s = 1; s <= 4; s++) {
+    ctx.beginPath(); ctx.arc(cx, cy, R * s/4, 0, Math.PI*2); ctx.stroke();
+  }
+
+  // leaf dots + labels
+  const palette = ['#c84b1e','#1e7a6e','#b8860b','#4a3a8a','#1a5a8a','#8a1a5a'];
+  leaves.forEach((lf, i) => {
+    const [x,y] = toXY(lf);
+    ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2);
+    ctx.fillStyle = palette[i%palette.length]; ctx.fill();
+    const angle = lf._angle;
+    const lx = cx + (R+28) * Math.cos(angle);
+    const ly = cy + (R+28) * Math.sin(angle);
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(angle + (Math.abs(angle) > Math.PI/2 ? Math.PI : 0));
+    ctx.fillStyle = '#1a1510'; ctx.font = '600 12px Outfit, sans-serif';
+    ctx.textAlign = Math.abs(angle) > Math.PI/2 ? 'right' : 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(lf.name, 0, 0);
+    ctx.restore();
+  });
+
+  // center dot
+  ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI*2);
+  ctx.fillStyle = '#1a1510'; ctx.fill();
+}
+
+// ── 3. ASCII tree ─────────────────────────────────────────────────────────────
+function renderAscii(root) {
+  let lines = [];
+  function walk(node, prefix, isTail, isRoot) {
+    const connector = isRoot ? '' : (isTail ? '└── ' : '├── ');
+    const label     = node.isLeaf || (!node.children || !node.children.length)
+                    ? (node.name || '•')
+                    : '•';
+    const bl = (!isRoot && node.branchLength != null)
+             ? `  [${(node.branchLength).toFixed(4)}]` : '';
+    lines.push(prefix + connector + label + bl);
+    const childPrefix = prefix + (isRoot ? '' : (isTail ? '    ' : '│   '));
+    const children = node.children || [];
+    children.forEach((c,i) => walk(c, childPrefix, i===children.length-1, false));
+  }
+  walk(root, '', true, true);
+  document.getElementById('ascii-out').textContent = lines.join('\n');
+}
+
+// ── 4. Distance matrix ────────────────────────────────────────────────────────
+function hamming(a, b) {
+  a = a.toUpperCase(); b = b.toUpperCase();
+  const len = Math.max(a.length, b.length);
+  if (!len) return 0;
+  let d = 0;
+  for (let i = 0; i < len; i++) {
+    if ((a[i]||'-') !== (b[i]||'-')) d++;
+  }
+  return d / len;
+}
+
+function renderMatrix(seqs) {
+  const n = seqs.length;
+  // find min/max for highlighting
+  let minD = Infinity;
+  const dists = [];
+  for (let i = 0; i < n; i++) {
+    dists[i] = [];
+    for (let j = 0; j < n; j++) {
+      const d = i===j ? 0 : hamming(seqs[i].sequence, seqs[j].sequence);
+      dists[i][j] = d;
+      if (i!==j && d < minD) minD = d;
+    }
+  }
+
+  let html = '<thead><tr><th></th>' + seqs.map(s=>`<th>${s.name}</th>`).join('') + '</tr></thead><tbody>';
+  for (let i = 0; i < n; i++) {
+    html += `<tr><th>${seqs[i].name}</th>`;
+    for (let j = 0; j < n; j++) {
+      if (i===j) { html += `<td class="diag">—</td>`; continue; }
+      const cls = dists[i][j] === minD ? ' hi' : '';
+      html += `<td class="${cls}">${dists[i][j].toFixed(4)}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody>';
+  document.getElementById('matrix-table').innerHTML = html;
+}
+
+// ── Info cards ────────────────────────────────────────────────────────────────
+function renderInfoCards(seqs) {
+  const algoName = selectedAlgo === 'upgma' ? 'UPGMA' : 'Neighbor-Joining';
+  const algoDesc = selectedAlgo === 'upgma'
+    ? 'Assumes all lineages evolve at a constant rate (molecular clock). Simple and fast, ideal for closely related sequences.'
+    : 'Corrects for different evolutionary rates per branch. More accurate for real biological data across distantly related taxa.';
+
+  document.getElementById('info-cards').innerHTML = `
+    <div class="info-card">
+      <h4>Algorithm Used</h4>
+      <p><strong>${algoName}</strong> — ${algoDesc}</p>
+    </div>
+    <div class="info-card">
+      <h4>Sequences Analysed</h4>
+      <p>${seqs.length} sequences · ${seqs[0].sequence.length} bp each (approx) · p-distance metric</p>
+    </div>
+    <div class="info-card">
+      <h4>Distance Metric</h4>
+      <p>p-distance (Hamming): fraction of positions that differ between any two sequences.</p>
+    </div>
+    <div class="info-card">
+      <h4>Tree Representations</h4>
+      <p>Dendrogram · Radial · ASCII · Newick format — all derived from the same tree topology.</p>
+    </div>`;
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function setStatus(msg, type='') {
+  const s = document.getElementById('status');
+  s.textContent = msg;
+  s.className = 'status' + (type ? ' '+type : '');
+}
+function setLoading(on) {
+  document.getElementById('spin').style.display   = on ? 'block' : 'none';
+  document.getElementById('btn-lbl').textContent  = on ? 'Building…' : 'Build Phylogenetic Tree';
+  document.getElementById('build-btn').disabled   = on;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadPreset('primates');
+</script>
+</body>
+</html>

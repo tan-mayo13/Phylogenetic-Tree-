@@ -99,7 +99,7 @@ phylo-tree/
 
 ---
 
-## 📐 Distance Calculation
+## Distance Calculation
 
 Uses **p-distance**:
 

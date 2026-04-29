@@ -131,7 +131,6 @@ ATGG
 * Vaccine design — influenza vaccine strains are chosen each year by building phylogenetic trees of circulating strains and predicting which branch is likely to dominate the coming season.
 Species classification (taxonomy) — before genetics, taxonomy was based on physical traits. Now, gene sequences are used to definitively resolve relationships — for example, confirming that hippos are the closest living relatives of whales.
 * Forensic biology — phylogenetic trees have been used in court to prove HIV transmission between individuals, or to identify the source of a biological contamination.
-* Cancer evolution — tumour cells accumulate mutations over time. By sequencing many cells from a tumour and building a tree, oncologists can reconstruct the order of mutations and identify the founding clone.
 
 ---
 

@@ -15,7 +15,7 @@ It is designed for beginners to understand both:
 
 ---
 
-## ⚙️ Tech Stack
+## Tech Stack
 
 * **Backend:** Java 17, Spring Boot 3
 * **Frontend:** HTML, CSS, JavaScript
@@ -27,7 +27,7 @@ It is designed for beginners to understand both:
 
 ---
 
-## 🧠 What It Does
+## What It Does
 
 ### Input:
 
@@ -44,7 +44,7 @@ It is designed for beginners to understand both:
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 phylo-tree/
@@ -117,14 +117,14 @@ ATGG
 
 ---
 
-## 📊 Features
+## Features
 
 * Multiple tree visualizations
 * Distance matrix with highlights
 
 ---
 
-## 🌍 Real-World Applications
+## Real-World Applications
 
 * Tracking virus evolution (e.g., COVID variants)
 * Cancer evolution studies
@@ -133,7 +133,7 @@ ATGG
 
 ---
 
-## 📖 Key Concepts
+## Key Concepts
 
 * **Phylogenetic Tree:** Evolutionary relationship diagram
 * **Node:** Represents a species or ancestor

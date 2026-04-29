@@ -124,12 +124,14 @@ ATGG
 
 ---
 
-## Real-World Applications
+## Applications
 
-* Tracking virus evolution (e.g., COVID variants)
-* Cancer evolution studies
-* Conservation biology
-* Forensic analysis
+* Epidemiology / outbreak tracking — during COVID-19, SARS-CoV-2 genomes were phylogenetically clustered every day to track variants (Alpha, Delta, Omicron). NJ and similar methods were used to see which strains were most closely related and where they spread geographically.
+*Drug resistance — HIV mutates rapidly. Phylogenetic trees of HIV sequences from a patient over time show which resistant mutations arose from which ancestral virus strain, guiding treatment decisions.
+* Vaccine design — influenza vaccine strains are chosen each year by building phylogenetic trees of circulating strains and predicting which branch is likely to dominate the coming season.
+Species classification (taxonomy) — before genetics, taxonomy was based on physical traits. Now, gene sequences are used to definitively resolve relationships — for example, confirming that hippos are the closest living relatives of whales.
+* Forensic biology — phylogenetic trees have been used in court to prove HIV transmission between individuals, or to identify the source of a biological contamination.
+* Cancer evolution — tumour cells accumulate mutations over time. By sequencing many cells from a tumour and building a tree, oncologists can reconstruct the order of mutations and identify the founding clone.
 
 ---
 
